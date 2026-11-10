@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>東立歷屆考卷</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="東立歷屆考卷">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="/neihu/icon-192.png">
+<link rel="icon" href="/neihu/icon-192.png">
+<style>
+html,body{margin:0;height:100%;background:#fff;overflow:hidden}
+#f{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px));border:0;background:#f3f5f8}
+#splash{position:fixed;inset:0;z-index:9;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .35s;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+#splash img{width:120px;height:120px;border-radius:50%}
+#splash .n{font-size:24px;font-weight:700;color:#21376E;letter-spacing:.12em;margin-top:6px}
+#splash .s{font-size:14px;color:#6b7686;letter-spacing:.08em}
+#splash .bar{width:140px;height:4px;border-radius:2px;background:#e6ebf5;overflow:hidden;margin-top:18px}
+#splash .bar i{display:block;width:40%;height:100%;background:#21376E;border-radius:2px;animation:mv 1.1s ease-in-out infinite}
+#splash .t{font-size:13px;color:#8a96a3}
+@keyframes mv{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+</style>
+</head>
+<body>
+<div id="splash">
+  <img src="/neihu/icon-512.png" alt="">
+  <div class="n">東立文理</div>
+  <div class="s">內湖最有溫度的補習班</div>
+  <div class="bar"><i></i></div>
+  <div class="t" id="st">東立歷屆考卷 載入中…</div>
+</div>
+<iframe id="f" title="東立歷屆考卷" allow="web-share; clipboard-write; clipboard-read; fullscreen"></iframe>
+<script>
+// ===== 東立歷屆考卷 App 外殼 v1111-2 =====
+var EXEC = 'https://script.google.com/macros/s/AKfycbzA6fSE4U3EIdYbDxoqpoLEQ9xDAiFuv4eBggwbK559AeptVMfVod_jIywP5Y7NQGzZ/exec';
+var ENTRY_KEY = 'exams-entry';
+var qs = new URLSearchParams(location.search), entry = '';
+try {
+  if (qs.has('admin')) { entry = 'admin'; localStorage.setItem(ENTRY_KEY, entry); }
+  else if (qs.has('user')) { localStorage.removeItem(ENTRY_KEY); }
+  else entry = localStorage.getItem(ENTRY_KEY) || '';
+} catch (e) {}
+document.getElementById('f').src = EXEC + (entry === 'admin' ? '?admin' : '');
+
+// 裡面的網頁把登入狀態等資料存在外殼這裡（iPhone 關掉 App 也記得）
+function okOrigin(o) { return /^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(o) || o === 'https://script.google.com'; }
+window.addEventListener('message', function (e) {
+  if (!okOrigin(e.origin)) return;
+  var d = e.data || {};
+  if (d.examStore === 'ready') { hideSplash(); return; }
+  if (typeof d.k !== 'string' || d.k.indexOf('exam_') !== 0) return;
+  try {
+    if (d.examStore === 'get') e.source.postMessage({ examStore: 'got', id: d.id, v: localStorage.getItem(d.k) }, e.origin);
+    else if (d.examStore === 'set') { if (d.v == null) localStorage.removeItem(d.k); else localStorage.setItem(d.k, String(d.v)); }
+  } catch (err) {}
+});
+var hidden = false;
+function hideSplash() {
+  if (hidden) return; hidden = true;
+  var s = document.getElementById('splash'); s.style.opacity = '0'; setTimeout(function () { s.remove(); }, 400);
+}
+setTimeout(function () { var t = document.getElementById('st'); if (t) t.textContent = '正在讀取資料…'; }, 2500);
+setTimeout(hideSplash, 15000);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+</script>
+</body>
+</html>
